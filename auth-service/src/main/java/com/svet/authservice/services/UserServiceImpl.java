@@ -30,6 +30,7 @@ public class UserServiceImpl implements UserService {
     private final RoleRepo roleRepo;
     private final PasswordEncoder encoder;
     private final JwtService jwtService;
+    private final PasswordEncoder passwordEncoder;
 
     @Override
     public JwtDto signIn(UserCredentials userCredentials) throws AuthenticationException {
@@ -97,9 +98,18 @@ public class UserServiceImpl implements UserService {
         return user;
     }
 
-    private User findByCredentials(UserCredentials userCredentials) {
+    private User findByCredentials(UserCredentials userCredentials) throws AuthenticationException {
         Optional<User> user = userRepo.findByUsername(userCredentials.getUsername());
-        return user.orElse(null);
+
+        if (user.isEmpty()) throw new AuthenticationException("User wasn't found");
+
+        User foundUser = user.get();
+
+        if (!passwordEncoder.matches(userCredentials.getPassword(), foundUser.getPassword())) {
+            throw new AuthenticationException("Wrong password");
+        }
+
+        return foundUser;
     }
 
     private Map<String, Object> setUserClaims(User user) {
