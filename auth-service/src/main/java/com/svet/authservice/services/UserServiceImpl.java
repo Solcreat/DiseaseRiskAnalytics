@@ -30,13 +30,13 @@ public class UserServiceImpl implements UserService {
     private final RoleRepo roleRepo;
     private final PasswordEncoder encoder;
     private final JwtService jwtService;
-    private final PasswordEncoder passwordEncoder;
 
     @Override
     public JwtDto signIn(UserCredentials userCredentials) throws AuthenticationException {
         User user = findByCredentials(userCredentials);
         Map<String, Object> claims = setUserClaims(user);
         return jwtService.generateTokens(claims, user.getUsername());
+
     }
 
     @Override
@@ -99,17 +99,12 @@ public class UserServiceImpl implements UserService {
     }
 
     private User findByCredentials(UserCredentials userCredentials) throws AuthenticationException {
-        Optional<User> user = userRepo.findByUsername(userCredentials.getUsername());
-
-        if (user.isEmpty()) throw new AuthenticationException("User wasn't found");
-
-        User foundUser = user.get();
-
-        if (!passwordEncoder.matches(userCredentials.getPassword(), foundUser.getPassword())) {
-            throw new AuthenticationException("Wrong password");
+        Optional<User> userOpt = userRepo.findByUsername(userCredentials.getUsername());
+        User user = userOpt.orElseThrow(() -> new AuthenticationException("Данные введены неверно"));
+        if (!encoder.matches(userCredentials.getPassword(), user.getPassword())) {
+            throw new AuthenticationException("Пароль введён неверно");
         }
-
-        return foundUser;
+        return user;
     }
 
     private Map<String, Object> setUserClaims(User user) {

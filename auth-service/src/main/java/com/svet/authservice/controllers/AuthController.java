@@ -26,13 +26,13 @@ public class AuthController {
     private final UserServiceImpl userService;
 
     @PostMapping("/signIn")
-    public ResponseEntity<JwtDto> signIn(@RequestBody UserCredentials userCredentials) {
-        JwtDto jwtDto = new JwtDto();
+    public ResponseEntity<?> signIn(@RequestBody UserCredentials userCredentials) {
         try {
-            jwtDto = userService.signIn(userCredentials);
+            JwtDto jwtDto = userService.signIn(userCredentials);
             return ResponseEntity.ok(jwtDto);
         } catch (AuthenticationException e) {
-            return ResponseEntity.badRequest().body(jwtDto);
+            return ResponseEntity.badRequest()
+                    .body(Map.of("error", e.getMessage()));
         }
     }
 
